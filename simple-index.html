@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Desktop Mate</title>
+    <style>
+        body {
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            user-select: none;
+        }
+        
+        #mateCanvas {
+            display: block;
+        }
+        
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 10px;
+            transition: all 0.2s;
+            min-width: 60px;
+        }
+        
+        button:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            max-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="mateCanvas"></canvas>
+    
+    <div class="instructions">
+        🐕 Cute Desktop Mate<br>
+        🖱️ Drag to move anywhere<br>
+        👆 Double-click to talk<br>
+        🎮 Use buttons below
+    </div>
+    
+    <div id="controls">
+        <button onclick="walk()">🚶 Walk</button>
+        <button onclick="jump()">🦘 Jump</button>
+        <button onclick="talk()">💬 Talk</button>
+        <button onclick="dance()">💃 Dance</button>
+        <button onclick="window.close()" style="background: rgba(255,100,100,0.9);">❌ Exit</button>
+    </div>
+    
+    <script src="simple-mate.js"></script>
+</body>
+</html>
