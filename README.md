@@ -2,113 +2,70 @@
 
 A cute interactive desktop companion built with Electron! Your new virtual pet that lives on your desktop.
 
+## 🚀 Quick Start for Users
+
+### Option 1: Easy Installer (Recommended)
+1. **Download** the `installer` folder
+2. **Install Node.js** from [nodejs.org](https://nodejs.org)
+3. **Double-click** `install.bat` in installer folder
+4. **Run** using `run.bat` or desktop shortcut
+
+### Option 2: Manual Setup
+1. **Install Node.js** from [nodejs.org](https://nodejs.org)
+2. **Download** this repository
+3. **Open terminal** in project folder
+4. **Run:** `npm install`
+5. **Run:** `npm start`
+
 ## ✨ Features
 
-- 🖱️ **Drag & Drop** - Move your mate anywhere on the screen
-- 🚶 **Walk Animation** - Watch your mate walk around with animated paws
+- 🖱️ **Drag & Drop** - Move your mate anywhere on screen
+- 🚶 **Walk Animation** - Animated walking with physics
 - 🦘 **Jump Physics** - Realistic jumping with gravity
-- 💬 **Talk** - Interactive speech bubbles with cute messages
+- 💬 **Talk** - Interactive speech bubbles
 - 💃 **Dance** - Fun dance animations
-- 👁️ **Eye Tracking** - Animated eyes that follow and blink
-- 🐕 **Cute Design** - Adorable dog-like character with wagging tail and bouncing ears
-- 🖥️ **Full Screen** - Works across your entire desktop
-- 🎨 **Color Changes** - Different colors for different actions
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm
-
-### Installation & Setup
-
-1. **Clone or download this project**
-   ```bash
-   git clone <repository-url>
-   cd desktop-mate
-   ```
-
-2. **Initialize npm (if package.json doesn't exist)**
-   ```bash
-   npm init -y
-   ```
-
-3. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-4. **Start the application**
-   ```bash
-   npm start
-   ```
+- 👁️ **Eye Tracking** - Animated blinking eyes
+- 🎭 **Character Switch** - Boy/Girl characters
+- 🖥️ **Desktop Overlay** - Transparent always-on-top window
 
 ## 🎮 How to Use
 
-### Controls
-- **🚶 Walk Button** - Makes your mate walk around for 4 seconds
-- **🦘 Jump Button** - Makes your mate jump with physics
-- **💬 Talk Button** - Shows speech bubbles with messages
-- **💃 Dance Button** - Animated dance moves
-- **❌ Exit Button** - Close the application
-
-### Interactions
-- **Drag**: Click and drag your mate to move it anywhere on screen
-- **Double-click**: Double-click on your mate to make it talk
-- **Hover**: Cursor changes when hovering over your mate
+- **🖱️ Drag**: Click and drag your mate anywhere
+- **🖱️ Right-click**: Context menu with actions
+- **👆 Double-click**: Make your mate talk
+- **⌨️ Keyboard**: W-Walk, J-Jump, T-Talk, D-Dance, S-Switch
 
 ## 📁 Project Structure
 
 ```
 desktop-mate/
-├── main.js              # Electron main process
-├── simple-index.html    # UI layout
-├── simple-mate.js       # Character logic & animations
-├── package.json         # Dependencies & scripts
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
+├── installer/           # User-friendly installer
+│   ├── install.bat     # One-click installer
+│   ├── run.bat         # Launch script
+│   ├── README.txt      # User instructions
+│   └── app files...    # Core application
+├── main.js             # Electron main process
+├── simple-index.html   # UI layout
+├── simple-mate.js      # Character logic
+└── package.json        # Dependencies
 ```
 
-## 🛠️ Development
+## 🔧 For Developers
 
-### Scripts
-- `npm start` - Run the application
-- `npm install` - Install dependencies
+### Development
+```bash
+npm install
+npm start
+```
 
-### Customization
-- Edit `simple-mate.js` to modify character behavior
-- Change colors, animations, or add new features
-- Modify `simple-index.html` for UI changes
-
-## 🎨 Character Features
-
-- **Animated tail wagging**
-- **Bouncing ears**
-- **Blinking eyes with shine effects**
-- **Walking paw animations**
-- **Dynamic speech bubbles**
-- **Shadow effects**
-- **Smooth color transitions**
-
-## 🔧 Technical Details
-
-- **Framework**: Electron
-- **Rendering**: HTML5 Canvas
-- **Animation**: RequestAnimationFrame
-- **Physics**: Custom gravity system
-- **UI**: Transparent fullscreen window
+### Distribution
+- Use the `installer` folder for end users
+- Contains all necessary files and setup scripts
+- Users only need Node.js + double-click installer
 
 ## 📝 License
 
 MIT License - Feel free to modify and distribute!
-
-## 🤝 Contributing
-
-1. Fork the project
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
 
 ---
 
