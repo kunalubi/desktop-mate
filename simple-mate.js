@@ -1,5 +1,17 @@
 const canvas = document.getElementById("mateCanvas");
 const ctx = canvas.getContext("2d");
+const { ipcRenderer } = require('electron');
+
+// Mouse event handling for click-through
+let isOverInteractiveElement = false;
+
+function updateMouseEvents() {
+    if (isOverInteractiveElement) {
+        ipcRenderer.send('set-ignore-mouse-events', false);
+    } else {
+        ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+    }
+}
 
 // Canvas setup - Full screen
 function resizeCanvas() {
@@ -35,8 +47,12 @@ let mate = {
 // Drag and drop functionality
 let mouseDown = false;
 let mouseOffset = { x: 0, y: 0 };
+let dragStartTime = 0;
+let hasDragged = false;
 
 canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // Only left click for drag
+    
     const mouseX = e.clientX;
     const mouseY = e.clientY;
     
@@ -44,11 +60,14 @@ canvas.addEventListener('mousedown', (e) => {
     const distance = Math.sqrt((mouseX - (mate.x + mate.size/2))**2 + (mouseY - (mate.y + mate.size/2))**2);
     if (distance < mate.size/2) {
         mouseDown = true;
-        mate.isDragging = true;
-        mate.state = 'idle';
+        dragStartTime = Date.now();
+        hasDragged = false;
         mouseOffset.x = mouseX - mate.x;
         mouseOffset.y = mouseY - mate.y;
         document.body.style.cursor = 'grabbing';
+        isOverInteractiveElement = true;
+        updateMouseEvents();
+        hideContextMenu(); // Hide menu when starting drag
     }
 });
 
@@ -56,27 +75,69 @@ canvas.addEventListener('mousemove', (e) => {
     const mouseX = e.clientX;
     const mouseY = e.clientY;
     
-    if (mouseDown && mate.isDragging) {
-        mate.x = mouseX - mouseOffset.x;
-        mate.y = mouseY - mouseOffset.y;
+    if (mouseDown) {
+        const dragDistance = Math.sqrt((mouseX - (mate.x + mouseOffset.x))**2 + (mouseY - (mate.y + mouseOffset.y))**2);
         
-        // Keep mate within screen bounds
-        mate.x = Math.max(0, Math.min(canvas.width - mate.size, mate.x));
-        mate.y = Math.max(0, Math.min(canvas.height - mate.size, mate.y));
-        
-        mate.dx = 0;
-        mate.dy = 0;
+        if (dragDistance > 5) { // Start dragging after 5px movement
+            hasDragged = true;
+            mate.isDragging = true;
+            mate.state = 'idle'; // Stop any current action when dragging
+            mate.dx = 0;
+            mate.dy = 0;
+            
+            mate.x = mouseX - mouseOffset.x;
+            mate.y = mouseY - mouseOffset.y;
+            
+            // Keep mate within screen bounds
+            mate.x = Math.max(0, Math.min(canvas.width - mate.size, mate.x));
+            mate.y = Math.max(0, Math.min(canvas.height - mate.size, mate.y));
+        }
     } else {
-        // Check if hovering over mate
+        // Check if hovering over mate or context menu
         const distance = Math.sqrt((mouseX - (mate.x + mate.size/2))**2 + (mouseY - (mate.y + mate.size/2))**2);
-        document.body.style.cursor = distance < mate.size/2 ? 'grab' : 'default';
+        const contextMenu = document.getElementById('contextMenu');
+        const contextRect = contextMenu.getBoundingClientRect();
+        const overContextMenu = contextMenu.style.display === 'block' && 
+                               mouseX >= contextRect.left && mouseX <= contextRect.right && 
+                               mouseY >= contextRect.top && mouseY <= contextRect.bottom;
+        
+        const wasOverInteractive = isOverInteractiveElement;
+        isOverInteractiveElement = distance < mate.size/2 || overContextMenu;
+        
+        if (wasOverInteractive !== isOverInteractiveElement) {
+            updateMouseEvents();
+        }
+        
+        document.body.style.cursor = isOverInteractiveElement ? 'grab' : 'default';
     }
 });
 
-canvas.addEventListener('mouseup', () => {
-    mouseDown = false;
-    mate.isDragging = false;
-    document.body.style.cursor = 'default';
+canvas.addEventListener('mouseup', (e) => {
+    if (mouseDown) {
+        mouseDown = false;
+        mate.isDragging = false;
+        document.body.style.cursor = 'default';
+        
+        // Reset interactive state after a brief delay
+        setTimeout(() => {
+            if (!mouseDown) {
+                isOverInteractiveElement = false;
+                updateMouseEvents();
+            }
+        }, 50);
+    }
+});
+
+// Right click for context menu
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    
+    const distance = Math.sqrt((mouseX - (mate.x + mate.size/2))**2 + (mouseY - (mate.y + mate.size/2))**2);
+    if (distance < mate.size/2 && !hasDragged) {
+        showContextMenu(mouseX, mouseY);
+    }
 });
 
 // Double click for talk
@@ -88,6 +149,19 @@ canvas.addEventListener('dblclick', (e) => {
     if (distance < mate.size/2) {
         talk();
     }
+});
+
+// Hide context menu on click elsewhere
+document.addEventListener('click', (e) => {
+    const contextMenu = document.getElementById('contextMenu');
+    if (!contextMenu.contains(e.target) && contextMenu.style.display === 'block') {
+        hideContextMenu();
+    }
+});
+
+// Prevent context menu from closing when clicking on it
+document.getElementById('contextMenu').addEventListener('click', (e) => {
+    e.stopPropagation();
 });
 
 // Animation loop
@@ -113,6 +187,7 @@ function animate() {
                 mate.y = mate.groundY;
                 mate.jumpVelocity = 0;
                 mate.state = 'idle';
+                mate.currentColor = mate.baseColor;
             }
         }
     }
@@ -313,16 +388,69 @@ function drawMate() {
     }
 }
 
+// Context Menu Functions
+function showContextMenu(x, y) {
+    const contextMenu = document.getElementById('contextMenu');
+    
+    // Update menu items first
+    updateMenuItems();
+    
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = x + 'px';
+    contextMenu.style.top = y + 'px';
+    
+    // Keep menu within screen bounds
+    setTimeout(() => {
+        const rect = contextMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            contextMenu.style.left = (x - rect.width) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+            contextMenu.style.top = (y - rect.height) + 'px';
+        }
+    }, 10);
+    
+    isOverInteractiveElement = true;
+    updateMouseEvents();
+}
+
+function hideContextMenu() {
+    const contextMenu = document.getElementById('contextMenu');
+    if (contextMenu.style.display === 'block') {
+        contextMenu.style.display = 'none';
+        setTimeout(() => {
+            if (!mouseDown) {
+                isOverInteractiveElement = false;
+                updateMouseEvents();
+            }
+        }, 50);
+    }
+}
+
+function updateMenuItems() {
+    const walkItem = document.getElementById('walkMenuItem');
+    const talkItem = document.getElementById('talkMenuItem');
+    const danceItem = document.getElementById('danceMenuItem');
+    
+    walkItem.innerHTML = mate.state === 'walking' ? '⏹️ Stop Walk' : '🚶 Walk';
+    talkItem.innerHTML = mate.talkTimer > 0 ? '🤐 Stop Talk' : '💬 Talk';
+    danceItem.innerHTML = danceInterval ? '⏹️ Stop Dance' : '💃 Dance';
+}
+
 // Actions
 function walk() {
-    mate.state = 'walking';
-    mate.dx = 3 * mate.walkDirection;
-    mate.currentColor = '#87CEEB';
-    setTimeout(() => {
+    if (mate.state === 'walking') {
+        // Stop walking
         mate.state = 'idle';
         mate.dx = 0;
         mate.currentColor = mate.baseColor;
-    }, 4000);
+    } else {
+        // Start walking
+        mate.state = 'walking';
+        mate.dx = 3 * mate.walkDirection;
+        mate.currentColor = '#87CEEB';
+    }
+    hideContextMenu();
 }
 
 function jump() {
@@ -331,35 +459,71 @@ function jump() {
         mate.jumpVelocity = -15;
         mate.groundY = mate.y;
         mate.currentColor = '#98FB98';
-        setTimeout(() => mate.currentColor = mate.baseColor, 1200);
+        // Color will reset when jump completes naturally
+        setTimeout(() => {
+            if (mate.state === 'idle') mate.currentColor = mate.baseColor;
+        }, 1200);
     }
+    hideContextMenu();
 }
 
 function talk() {
-    mate.talkTimer = 120; // Talk for 2 seconds
-    mate.currentColor = '#DDA0DD';
-    setTimeout(() => mate.currentColor = mate.baseColor, 2000);
+    if (mate.talkTimer > 0) {
+        // Stop talking
+        mate.talkTimer = 0;
+        mate.currentColor = mate.baseColor;
+    } else {
+        // Start talking (continuous)
+        mate.talkTimer = 9999; // Very long time
+        mate.currentColor = '#DDA0DD';
+    }
+    hideContextMenu();
 }
 
+let danceInterval = null;
 function dance() {
-    mate.currentColor = '#F0E68C';
-    let danceCount = 0;
-    const danceInterval = setInterval(() => {
-        if (!mate.isDragging) {
-            mate.x += Math.sin(danceCount * 0.3) * 8;
-            mate.y += Math.cos(danceCount * 0.4) * 4;
-            
-            // Keep within bounds
-            mate.x = Math.max(0, Math.min(canvas.width - mate.size, mate.x));
-            mate.y = Math.max(0, Math.min(canvas.height - mate.size, mate.y));
-        }
-        danceCount++;
-        if (danceCount > 80) {
-            clearInterval(danceInterval);
-            mate.currentColor = mate.baseColor;
-        }
-    }, 60);
+    if (danceInterval) {
+        // Stop dancing
+        clearInterval(danceInterval);
+        danceInterval = null;
+        mate.currentColor = mate.baseColor;
+    } else {
+        // Start dancing
+        mate.currentColor = '#F0E68C';
+        let danceCount = 0;
+        danceInterval = setInterval(() => {
+            if (!mate.isDragging) {
+                mate.x += Math.sin(danceCount * 0.3) * 8;
+                mate.y += Math.cos(danceCount * 0.4) * 4;
+                
+                // Keep within bounds
+                mate.x = Math.max(0, Math.min(canvas.width - mate.size, mate.x));
+                mate.y = Math.max(0, Math.min(canvas.height - mate.size, mate.y));
+            }
+            danceCount++;
+        }, 60);
+    }
+    hideContextMenu();
 }
+
+// Keyboard shortcuts for easy access
+document.addEventListener('keydown', (e) => {
+    // Only work when window is focused
+    if (e.key === 'w' || e.key === 'W') {
+        walk();
+    } else if (e.key === 'j' || e.key === 'J') {
+        jump();
+    } else if (e.key === 't' || e.key === 'T') {
+        talk();
+    } else if (e.key === 'd' || e.key === 'D') {
+        dance();
+    } else if (e.key === 'Escape') {
+        window.close();
+    }
+});
+
+// Initialize mouse events
+updateMouseEvents();
 
 // Start animation
 animate();

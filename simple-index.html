@@ -15,68 +15,59 @@
             display: block;
         }
         
-        #controls {
+        .context-menu {
             position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        button {
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 10px;
-            transition: all 0.2s;
-            min-width: 60px;
-        }
-        
-        button:hover {
-            background: white;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .instructions {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #ccc;
             border-radius: 8px;
-            font-size: 10px;
-            max-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            padding: 4px 0;
+            min-width: 120px;
+            z-index: 1000;
+            display: none;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        
+        .menu-item:hover {
+            background: rgba(0, 123, 255, 0.1);
+        }
+        
+        .menu-item.exit {
+            color: #dc3545;
+        }
+        
+        .menu-item.exit:hover {
+            background: rgba(220, 53, 69, 0.1);
+        }
+        
+        .menu-separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 4px 0;
         }
     </style>
 </head>
 <body>
     <canvas id="mateCanvas"></canvas>
     
-    <div class="instructions">
-        🐕 Cute Desktop Mate<br>
-        🖱️ Drag to move anywhere<br>
-        👆 Double-click to talk<br>
-        🎮 Use buttons below
-    </div>
-    
-    <div id="controls">
-        <button onclick="walk()">🚶 Walk</button>
-        <button onclick="jump()">🦘 Jump</button>
-        <button onclick="talk()">💬 Talk</button>
-        <button onclick="dance()">💃 Dance</button>
-        <button onclick="window.close()" style="background: rgba(255,100,100,0.9);">❌ Exit</button>
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="menu-item" onclick="walk()" id="walkMenuItem">🚶 Walk</div>
+        <div class="menu-item" onclick="jump()">🦘 Jump</div>
+        <div class="menu-item" onclick="talk()" id="talkMenuItem">💬 Talk</div>
+        <div class="menu-item" onclick="dance()" id="danceMenuItem">💃 Dance</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item exit" onclick="window.close()">❌ Exit</div>
     </div>
     
     <script src="simple-mate.js"></script>
